@@ -43,10 +43,9 @@ class Data(Base):
             transform_attr = {} if transform_attr is None else transform_attr
             if not transform_class.startswith("torchvision"):
                 return import_from_cfg(transform_class)(**transform_attr).get()
-            else:
-                return import_from_cfg(transform_class)(**transform_attr)
+            return import_from_cfg(transform_class)(**transform_attr)
 
-        self.log.debug(f"Building transforms...")
+        self.log.debug("Building transforms...")
 
         post_model_transforms = [build_transforms(transform) for transform in pre_model_transforms]
         post_dataset_transforms = [build_transforms(transform) for transform in pre_dataset_transforms]
@@ -56,7 +55,7 @@ class Data(Base):
         self.log.debug(f"Plain transforms: {self.plain_transform}")
 
         RESIZE_TRANSFORMS = (transforms.Resize, transforms.RandomResizedCrop, transforms.CenterCrop)  # Order matters.
-        if any([isinstance(transform, RESIZE_TRANSFORMS) for transform in post_training_transforms]) and any(
+        if any(isinstance(transform, RESIZE_TRANSFORMS) for transform in post_training_transforms) and any(
             _model_resize_idx := [isinstance(transform, RESIZE_TRANSFORMS) for transform in post_model_transforms]
         ):
             _model_resize_idx.reverse()
@@ -69,7 +68,7 @@ class Data(Base):
         self.log.debug(f"Training transforms: {self.training_transform}")
 
     def get_dataset(self, dataset_cfg: DictConfig) -> None:
-        self.log.debug(f"Building dataset...")
+        self.log.debug("Building dataset...")
 
         self._init_dataset(dataset_cfg)
         # self._limit_dataset()
@@ -103,9 +102,9 @@ class Data(Base):
             if sampler and loader_cfg.shuffle:
                 self.log.warning("Sampler and shuffle are both set to True. Sampler will be used.")
                 loader_cfg.shuffle = False
-            return instantiate(loader_cfg, dataset=dataset, sampler=sampler, collate_fn=self.collate_fn)
+            return instantiate(loader_cfg, dataset=dataset, sampler=sampler, collate_fn=self._collate_fn)
 
-        self.collate_fn = getattr(self, self.cfg.collate_fn) if self.cfg.collate_fn else None
+        self._collate_fn = getattr(self, self.cfg.collate_fn) if self.cfg.collate_fn else None
 
         self.train_loader = _get_loader(dataloader_cfg.train_loader, dataset=self.train_data)
         self.train_plain_loader = _get_loader(dataloader_cfg.train_plain_loader, dataset=self.train_plain_data)

@@ -1,7 +1,7 @@
 import logging
 
-import matplotlib.patches as patches
 import matplotlib.pyplot as plt
+from matplotlib import patches
 
 logging.getLogger("matplotlib").setLevel(logging.ERROR)
 

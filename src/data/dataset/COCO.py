@@ -33,7 +33,7 @@ class COCODataset(Dataset):
             self.ids = [
                 img_id
                 for img_id in self.ids
-                if any([ann["area"] >= min_area for ann in self.coco.loadAnns(self.coco.getAnnIds(imgIds=img_id))])
+                if any(ann["area"] >= min_area for ann in self.coco.loadAnns(self.coco.getAnnIds(imgIds=img_id)))
             ]
 
     def __getitem__(self, index):
@@ -95,7 +95,6 @@ class COCOMultibbox(COCODataset):
 
         if len(anns) > 0:
             target = {}
-            # target["boxes"] = tv_tensors.BoundingBoxes([ann["bbox"] for ann in anns], format="XYWH", canvas_size=image.size)
             boxes = []
             for box in [ann["bbox"] for ann in anns]:
                 x, y, w, h = box

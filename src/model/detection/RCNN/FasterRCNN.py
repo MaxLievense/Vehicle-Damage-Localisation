@@ -21,7 +21,7 @@ class FasterRCNN(BaseModel):
                     for k, v in _target.items():
                         target[i][k] = v.to(self.device)
                 output = self.network(data, target)
-                loss = sum([o for o in output.values()])
+                loss = sum(list(output.values()))
                 loss.backward()
 
                 if self.cfg.clip_grad:

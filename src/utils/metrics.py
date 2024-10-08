@@ -13,7 +13,10 @@ class DetectionMetrics:
     count: int = 0
 
     def __str__(self):
-        return f"Precision: {self.Precision:.4f}, Recall: {self.Recall:.4f}, F1 Score: {self.F1_Score:.4f}, mAP: {self.mAP:.4f}, UOI: {self.UOI:.4f}"
+        return (
+            f"Precision: {self.Precision:.4f}, Recall: {self.Recall:.4f}, F1 Score: {self.F1_Score:.4f}, "
+            + f"mAP: {self.mAP:.4f}, UOI: {self.UOI:.4f}"
+        )
 
     def append(self, other):
         self.Precision = (self.Precision * self.count + other.Precision * other.count) / (self.count + other.count)
