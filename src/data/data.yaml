@@ -17,6 +17,10 @@ seed: ${seed}
 dataset_dir: data
 download: True
 
+dataloaders:
+  val_loader:
+    drop_last: True
+
 limit:
   train: False
   val: False

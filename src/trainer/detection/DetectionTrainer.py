@@ -7,6 +7,7 @@ import wandb
 
 from src.trainer.trainer import BaseTrainer
 from src.utils.metrics import DetectionMetrics, evaluate_detection_metrics
+from src.utils.plots import plot_img_with_bbox_and_gt
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_scheduler")
 
@@ -71,3 +72,6 @@ class DetectionTrainer(BaseTrainer):
                 evaluate_detection_metrics(output, data[1], running_results)
         wandb.log(running_results.to_wandb(loader), commit=False)
         self.log.info(f"Loader {loader}: " + str(running_results))
+
+        fig = plot_img_with_bbox_and_gt(data[0], data[1], output)
+        wandb.log({f"{loader}/images": [wandb.Image(fig)]}, commit=False)

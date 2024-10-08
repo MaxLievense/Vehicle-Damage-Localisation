@@ -16,12 +16,12 @@ class DetectionMetrics:
         return f"Precision: {self.Precision:.4f}, Recall: {self.Recall:.4f}, F1 Score: {self.F1_Score:.4f}, mAP: {self.mAP:.4f}, UOI: {self.UOI:.4f}"
 
     def append(self, other):
-        self.Precision = (self.Precision * self.count + other.Precision) / (self.count + 1)
-        self.Recall = (self.Recall * self.count + other.Recall) / (self.count + 1)
-        self.F1_Score = (self.F1_Score * self.count + other.F1_Score) / (self.count + 1)
-        self.mAP = (self.mAP * self.count + other.mAP) / (self.count + 1)
-        self.UOI = (self.UOI * self.count + other.UOI) / (self.count + 1)
-        self.count += 1
+        self.Precision = (self.Precision * self.count + other.Precision * other.count) / (self.count + other.count)
+        self.Recall = (self.Recall * self.count + other.Recall * other.count) / (self.count + other.count)
+        self.F1_Score = (self.F1_Score * self.count + other.F1_Score * other.count) / (self.count + other.count)
+        self.mAP = (self.mAP * self.count + other.mAP * other.count) / (self.count + other.count)
+        self.UOI = (self.UOI * self.count + other.UOI * other.count) / (self.count + other.count)
+        self.count += other.count
         return self
 
     def to_wandb(self, tag):
@@ -83,7 +83,7 @@ def evaluate_detection_metrics(ground_truth, predictions, results: DetectionMetr
     precision, recall, f1_score = calculate_precision_recall_f1(tp, fp, fn)
     uoi = sum(iou_values) / len(iou_values) if iou_values else 0
 
-    results.append(DetectionMetrics(precision, recall, f1_score, mean_ap, uoi))
+    results.append(DetectionMetrics(precision, recall, f1_score, mean_ap, uoi, count=len(ground_truth)))
 
 
 def calculate_precision_recall_f1(tp, fp, fn):
