@@ -1,6 +1,6 @@
 defaults:
   - dataset
-  - ../transforms@dataset_transforms: normalize
+  - ../transforms@dataset_transforms: totensor
 
 dataset_name: VehicleDamage
 
@@ -8,14 +8,14 @@ train:
   _target_: src.data.dataset.COCO.COCOMultibbox
   root: ${data.dataset_dir}/vehicle_damage_detection/images/train
   json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_train.json
-  min_area: 5000
+  min_area: 500
 val:
   _target_: src.data.dataset.COCO.COCOMultibbox
   root: ${data.dataset_dir}/vehicle_damage_detection/images/val
   json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_val.json
-  min_area: 5000
+  min_area: 500
 test:
   _target_: src.data.dataset.COCO.COCOMultibbox
   root: ${data.dataset_dir}/vehicle_damage_detection/images/test
   json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_test.json
-  min_area: 5000
+  min_area: 500

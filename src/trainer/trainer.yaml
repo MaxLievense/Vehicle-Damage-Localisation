@@ -9,4 +9,4 @@ output_dir: models
 save_last: True # Save the last checkpoint
 eval_at_end: test # False or which loader (e.g. val, test) to evaluate at the end of training
 
-epochs: 30
+epochs: 10

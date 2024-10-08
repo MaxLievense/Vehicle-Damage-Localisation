@@ -62,6 +62,5 @@ class BaseTrainer(Base):
     def save(self, tag=None):
         filename = f"{self.output_dir}/{self.last_epoch}{f'.{tag}' if tag else ''}.pth"
         state_dict = self.model.state_dict()
-        state_dict["cfg"] = self.model.network.cfg
         torch.save(state_dict, filename)
         self.log.info(f"Model saved as {filename}")
