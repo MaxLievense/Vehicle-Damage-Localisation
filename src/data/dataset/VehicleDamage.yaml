@@ -8,11 +8,14 @@ train:
   _target_: src.data.dataset.COCO.COCOMultibbox
   root: ${data.dataset_dir}/vehicle_damage_detection/images/train
   json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_train.json
+  min_area: 5000
 val:
   _target_: src.data.dataset.COCO.COCOMultibbox
   root: ${data.dataset_dir}/vehicle_damage_detection/images/val
   json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_val.json
+  min_area: 5000
 test:
   _target_: src.data.dataset.COCO.COCOMultibbox
   root: ${data.dataset_dir}/vehicle_damage_detection/images/test
   json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_test.json
+  min_area: 5000
