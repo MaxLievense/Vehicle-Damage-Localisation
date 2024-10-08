@@ -2,11 +2,10 @@ import logging
 import os
 
 import torch
+import wandb
 from PIL import Image
 from pycocotools.coco import COCO
 from torch.utils.data import Dataset
-
-# from torchvision import tv_tensors
 
 logging.getLogger("PIL").setLevel(logging.WARNING)
 
@@ -35,6 +34,16 @@ class COCODataset(Dataset):
                 for img_id in self.ids
                 if any(ann["area"] >= min_area for ann in self.coco.loadAnns(self.coco.getAnnIds(imgIds=img_id)))
             ]
+
+        self.category_id_counts = {index: 0 for index in range(0, self.n_classes)}
+        for img_id in self.ids:
+            ann_ids = self.coco.getAnnIds(imgIds=img_id)
+            anns = self.coco.loadAnns(ann_ids)
+            if self.min_area is not None:
+                anns = [ann for ann in anns if ann["area"] >= self.min_area]
+            for ann in anns:
+                self.category_id_counts[ann["category_id"]] += 1
+        print(self.category_id_counts)
 
     def __getitem__(self, index):
         raise NotImplementedError
@@ -101,7 +110,7 @@ class COCOMultibbox(COCODataset):
                 boxes.append([x, y, x + w, y + h])
             target["boxes"] = torch.tensor(boxes)
 
-            target["labels"] = torch.tensor([ann["category_id"] + 1 for ann in anns])
+            target["labels"] = torch.tensor([ann["category_id"] for ann in anns])
             target["image_id"] = torch.tensor([img_id])
             target["area"] = torch.tensor([ann["area"] for ann in anns])
             target["iscrowd"] = torch.tensor([ann["iscrowd"] for ann in anns])
