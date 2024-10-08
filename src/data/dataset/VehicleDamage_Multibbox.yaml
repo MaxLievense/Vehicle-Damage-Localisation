@@ -1,9 +1,0 @@
-defaults:
-  - VehicleDamage_base
-
-train:
-  _target_: src.data.dataset.COCO.COCOMultibbox
-val:
-  _target_: src.data.dataset.COCO.COCOMultibbox
-test:
-  _target_: src.data.dataset.COCO.COCOMultibbox

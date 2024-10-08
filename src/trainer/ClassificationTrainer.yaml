@@ -7,6 +7,6 @@ _target_: src.trainer.ClassificationTrainer.ClassificationTrainer
 
 output_dir: models
 save_last: True
-eval_at_end: False
+eval_at_end: True
 
 epochs: 10

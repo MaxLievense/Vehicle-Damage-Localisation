@@ -78,3 +78,4 @@ class DetectionTrainer(ClassificationTrainer):
                         running_results[key] += results[key]
         final_results = {f"{loader}/{key}": value / eval_entries for key, value in running_results.items()}
         wandb.log(final_results)
+        self.log.debug(final_results)
