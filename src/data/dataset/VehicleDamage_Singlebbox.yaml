@@ -1,0 +1,19 @@
+defaults:
+  - dataset
+  - ../transforms@dataset_transforms: normalize
+
+dataset_name: VehicleDamage
+n_classes: 9
+
+train:
+  _target_: src.data.dataset.COCOSinglebbox.COCOSinglebbox
+  root: ${data.dataset_dir}/vehicle_damage_detection/images/train
+  json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_train.json
+val:
+  _target_: src.data.dataset.COCOSinglebbox.COCOSinglebbox
+  root: ${data.dataset_dir}/vehicle_damage_detection/images/val
+  json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_val.json
+test:
+  _target_: src.data.dataset.COCOSinglebbox.COCOSinglebbox
+  root: ${data.dataset_dir}/vehicle_damage_detection/images/test
+  json: ${data.dataset_dir}/vehicle_damage_detection/annotations/instances_test.json

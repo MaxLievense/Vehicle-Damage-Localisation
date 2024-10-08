@@ -1,0 +1,11 @@
+defaults:
+  - callbacks/callbacks
+
+device: ${device}
+
+_target_: src.trainer.trainer.Trainer
+output_dir: models
+save_last: True
+eval_at_end: False
+
+epochs: 10

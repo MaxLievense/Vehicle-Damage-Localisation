@@ -1,0 +1,4 @@
+*.json
+*.jpg
+*.zip
+**/.DS_Store
