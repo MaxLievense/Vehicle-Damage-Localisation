@@ -1,3 +1,0 @@
-_target_: src.model.model.FasterRCNN
-
-clip_grad: 1.0

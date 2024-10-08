@@ -2,8 +2,7 @@ defaults:
   - main
   - data: data
   - data/dataset: VehicleDamage
-  - model: FasterRCNN
-  - model/network: FasterRCNN_MNv3_L
+  - model: RCNN/FasterRCNN_MNv3_L
   - trainer: DetectionTrainer
   - trainer/optimizer: SGD
   - trainer/scheduler: CosineAnnealingLR
