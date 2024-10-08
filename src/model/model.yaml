@@ -1,1 +1,1 @@
-_target_: ACIL.model.model.Model
+_target_: src.model.model.Model

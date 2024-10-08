@@ -1,0 +1,4 @@
+_target_: ultralytics.YOLO
+model: yolov8n.pt
+task: detect
+verbose: True

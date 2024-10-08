@@ -3,6 +3,7 @@ from copy import deepcopy
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
+from torch.utils.data.dataloader import default_collate
 from torchvision import transforms
 
 from src.utils.base import Base
@@ -27,11 +28,11 @@ class Data(Base):
         self.get_transform(model_transforms, dataset_transforms, training_transforms)
         self.get_dataset(DictConfig(self.cfg.dataset))
         self.get_loaders(DictConfig(self.cfg.dataloaders))
-        self.n_classes = self.n_classes if hasattr(self.test_data, "self.n_classes") else self.cfg.dataset.n_classes
+        self.n_classes = self.test_data.n_classes if hasattr(self.test_data, "n_classes") else None
 
         self.log.info(
             f"Loaded {self.dataset_name} dataset with {self.n_classes} classes, "
-            + f"{len(self.train_data)} train-, {len(self.val_data)} val-, and {len(self.test_data)} test samples."
+            + f"{len(self.train_data)} train-, {len(self.val_data)} val-, and {len(self.test_data)} test datapoints."
         )
 
     def get_transform(
@@ -102,9 +103,30 @@ class Data(Base):
             if sampler and loader_cfg.shuffle:
                 self.log.warning("Sampler and shuffle are both set to True. Sampler will be used.")
                 loader_cfg.shuffle = False
-            return instantiate(loader_cfg, dataset=dataset, sampler=sampler)
+            return instantiate(loader_cfg, dataset=dataset, sampler=sampler, collate_fn=self.collate_fn)
+
+        self.collate_fn = getattr(self, self.cfg.collate_fn) if self.cfg.collate_fn else None
 
         self.train_loader = _get_loader(dataloader_cfg.train_loader, dataset=self.train_data)
         self.train_plain_loader = _get_loader(dataloader_cfg.train_plain_loader, dataset=self.train_plain_data)
         self.val_loader = _get_loader(dataloader_cfg.val_loader, dataset=self.val_data)
         self.test_loader = _get_loader(dataloader_cfg.test_loader, dataset=self.test_data)
+
+    @staticmethod
+    def collate_fn(batch):
+        images = []
+        targets = []
+
+        for item in batch:
+            # Separate the image tensor and the dictionary containing metadata
+            image, target = item
+
+            # Append the image tensor and target dictionary separately
+            images.append(image)
+            targets.append(target)
+
+        # Stack the image tensors into a single batch tensor
+        images = torch.stack(images, dim=0)
+
+        # The targets should remain a list of dictionaries
+        return images, targets

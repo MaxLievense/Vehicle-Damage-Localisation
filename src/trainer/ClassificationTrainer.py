@@ -4,23 +4,21 @@ import warnings
 
 import torch
 import wandb
-from ACIL.data.data import Data
-from ACIL.utils.base import Base
-from ACIL.utils.metrics import class_metrics
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from model.model import Model
+from src.data.data import Data
+from src.utils.base import Base
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_scheduler")
 
 
-class Trainer(Base):
+class ClassificationTrainer(Base):
     def __init__(
         self,
         device: torch.device,
         callbacks: dict,
-        model: Model,
+        model,
         data: Data,
         **cfg: dict,
     ) -> None:
@@ -115,14 +113,6 @@ class Trainer(Base):
                 _, logits = self.model.step(self, *data)
                 total_logits.append(logits)
                 total_labels.append(data[1])
-        closed_results, _ = class_metrics(
-            y_true=torch.cat(total_labels),
-            y_out=torch.cat(total_logits),
-            training_epoch=self.last_epoch,
-            data=self.data,
-            tag=loader,
-        )
-        return closed_results
 
     def save(self, tag=None):
         filename = f"{self.output_dir}/{self.last_epoch}{f'.{tag}' if tag else ''}.pth"

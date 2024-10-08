@@ -1,0 +1,9 @@
+defaults:
+  - VehicleDamage_base
+
+train:
+  _target_: src.data.dataset.COCO.COCOMultiSegmentation
+val:
+  _target_: src.data.dataset.COCO.COCOMultiSegmentation
+test:
+  _target_: src.data.dataset.COCO.COCOMultiSegmentation

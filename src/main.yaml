@@ -14,9 +14,9 @@ device: cuda:0
 seed: 42
 
 wandb:
-  project: 
+  project: Vehicle-Damage-Localisation
   group:
-  mode: disabled
+  mode: online
   dir: outputs/
   name:
   reinit: true

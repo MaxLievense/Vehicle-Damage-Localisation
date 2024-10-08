@@ -3,7 +3,6 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING
 
-import hydra
 import numpy as np
 import torch
 import wandb
@@ -11,6 +10,7 @@ from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
+import hydra
 from src.utils.base import Base
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ class Runner(Base):
     def build(self):
         self.data = instantiate(
             self.cfg.data,
-            model_transforms=self.cfg.model.network.get("transforms", []),
+            model_transforms=self.cfg.get("model", {}).get("network", {}).get("transforms", []),
             device=self.device,
             _recursive_=False,
         )

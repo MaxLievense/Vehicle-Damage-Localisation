@@ -1,4 +1,4 @@
-_target_: ACIL.trainer.callbacks.eval.eval.Eval
-every_n_epochs: 25
-at_start: False
-loader: test # test / val
+_target_: src.trainer.callbacks.eval.eval.Eval
+every_n_epochs: 1
+at_start: True
+loader: val

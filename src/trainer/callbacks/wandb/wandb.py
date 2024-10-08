@@ -1,6 +1,6 @@
 import wandb
 
-from ACIL.trainer.callbacks.base import BaseCallback
+from src.trainer.callbacks.base import BaseCallback
 
 
 class Wandb(BaseCallback):

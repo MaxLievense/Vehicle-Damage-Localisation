@@ -8,6 +8,7 @@ _target_: src.data.data.Data
 
 batch_size: 4
 num_workers: 8
+collate_fn: collate_fn
 
 dataset_transforms: ${data.dataset.dataset_transforms}
 training_transforms: ${data.dataset.training_transforms}

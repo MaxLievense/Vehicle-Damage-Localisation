@@ -1,0 +1,9 @@
+defaults:
+  - main
+  - data: data
+  - data/dataset: VehicleDamage_Multibbox
+  - model: FasterRCNN
+  - model/network: FasterRCNN_MNv3_L
+  - trainer: DetectionTrainer
+  - trainer/optimizer: SGD
+  - trainer/callbacks/eval: eval

@@ -1,0 +1,11 @@
+defaults:
+  - main
+  - data: data
+  - data/dataset: VehicleDamage_Singlebbox
+  - model: YOLO
+  - model/network: yolov8
+  - trainer: trainer
+  - trainer/optimizer: SGD
+
+wandb:
+  mode: disabled

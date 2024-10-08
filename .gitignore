@@ -3,3 +3,4 @@ outputs
 **/*.pyc
 **/__pycache__
 .vscode
+**.pt

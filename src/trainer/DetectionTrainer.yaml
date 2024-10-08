@@ -1,0 +1,6 @@
+defaults:
+  - ClassificationTrainer
+  - callbacks/callbacks
+
+_target_: src.trainer.DetectionTrainer.DetectionTrainer
+

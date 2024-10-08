@@ -3,13 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import torch
+import torchvision
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from ACIL.utils.base import Base
+from src.utils.base import Base
 
 if TYPE_CHECKING:
-    from ACIL.data.data import Data
+    from src.data.data import Data
 
 
 class Model(torch.nn.Module, Base):
@@ -33,9 +34,13 @@ class Model(torch.nn.Module, Base):
         self.network.to(self.device)
         self.log.info(f"Loaded model:\n{self.network}")
 
-        self.criterion = instantiate(DictConfig(self.cfg.criterion))
-        self.criterion.to(self.device)
-        self.log.info(f"Loaded criterion:\n{self.criterion}")
+        if self.cfg.get("criterion"):
+            self.criterion = instantiate(DictConfig(self.cfg.criterion))
+            self.criterion.to(self.device)
+            self.log.info(f"Loaded criterion:\n{self.criterion}")
+        else:
+            self.criterion = None
+            self.log.warning("No criterion loaded.")
 
     def __call__(self, x):
         return self.forward(x)
@@ -46,6 +51,7 @@ class Model(torch.nn.Module, Base):
     def step(self, trainer, data, target):
         if self.network.training:
             with torch.set_grad_enabled(True):
+                print(target)
                 output = self.network(data)
                 loss = self.criterion(output, target)
                 loss.backward()
@@ -65,5 +71,29 @@ class Model(torch.nn.Module, Base):
     def postepoch(self, *args, **kwargs):
         pass
 
-    def evaluate(self, *args, **kwargs):
-        raise NotImplementedError
+
+class FasterRCNN(Model):
+    def _init_modules(self):
+        super()._init_modules()
+        in_features = self.network.roi_heads.box_predictor.cls_score.in_features
+        self.network.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(
+            in_features, self.n_classes + 1
+        )  # add one for background
+        self.network.to(self.device)
+
+    def step(self, trainer, data, target):
+        if self.network.training:
+            with torch.set_grad_enabled(True):
+                # TODO: The Dataloader returns tensors on CPU, trainer only sends to device if tensor, not dict.
+                for i, _target in enumerate(target):
+                    for k, v in _target.items():
+                        target[i][k] = v.to(self.device)
+                output = self.network(data, target)
+                loss = sum([o for o in output.values()])
+                loss.backward()
+
+                if self.cfg.clip_grad:
+                    torch.nn.utils.clip_grad_norm_(self.network.parameters(), max_norm=self.cfg.clip_grad)
+                return loss.item(), output
+        output = self.network(data)
+        return None, output
