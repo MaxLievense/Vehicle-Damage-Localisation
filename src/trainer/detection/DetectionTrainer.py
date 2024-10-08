@@ -6,7 +6,7 @@ import torch
 import wandb
 
 from src.trainer.trainer import BaseTrainer
-from src.utils.metrics import evaluate_detection_metrics
+from src.utils.metrics import DetectionMetrics, evaluate_detection_metrics
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_scheduler")
 
@@ -63,19 +63,11 @@ class DetectionTrainer(BaseTrainer):
 
         self.model.network.eval()
 
-        running_results = None
-        eval_entries = 0
+        running_results = DetectionMetrics()
         with torch.no_grad():
             for _, data in enumerate(getattr(self.data, loader + "_loader")):
-                eval_entries += len(data[0])
                 data = [_data.to(self.device) if isinstance(_data, torch.Tensor) else _data for _data in data]
                 _, output = self.model.step(self, *data)
-                results = evaluate_detection_metrics(output, data[1])
-                if running_results is None:
-                    running_results = results
-                else:
-                    for key in running_results.keys():
-                        running_results[key] += results[key]
-        final_results = {f"{loader}/{key}": value / eval_entries for key, value in running_results.items()}
-        wandb.log(final_results)
-        self.log.debug(final_results)
+                evaluate_detection_metrics(output, data[1], running_results)
+        wandb.log(running_results.to_wandb(loader), commit=False)
+        self.log.info(f"Loader {loader}: " + str(running_results))

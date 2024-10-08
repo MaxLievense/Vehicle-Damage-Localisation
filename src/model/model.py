@@ -30,11 +30,11 @@ class BaseModel(torch.nn.Module, Base):
         self.data = data
         self.n_classes = data.n_classes
         self._init_modules()
+        self.log.info(f"Loaded model:\n{self.network}")
 
     def _init_modules(self):
         self.network = instantiate(DictConfig(self.cfg.network), n_classes=self.n_classes, device=self.device)
         self.network.to(self.device)
-        self.log.info(f"Loaded model:\n{self.network}")
 
         if self.cfg.get("criterion"):
             self.criterion = instantiate(DictConfig(self.cfg.criterion))

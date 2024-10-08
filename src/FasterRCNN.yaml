@@ -5,5 +5,5 @@ defaults:
   - model: detection/RCNN/FasterRCNN_MNv3_L
   - trainer: detection/DetectionTrainer
   - trainer/optimizer: SGD
-  - trainer/scheduler: CosineAnnealingLR
+  - trainer/scheduler: StepLR
   - trainer/callbacks/eval: eval

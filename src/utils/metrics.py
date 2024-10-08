@@ -1,7 +1,40 @@
+from dataclasses import dataclass
+
 from torchvision.ops import box_iou
 
 
-def evaluate_detection_metrics(ground_truth, predictions, iou_threshold=0.5):
+@dataclass
+class DetectionMetrics:
+    Precision: float = 0
+    Recall: float = 0
+    F1_Score: float = 0
+    mAP: float = 0
+    UOI: float = 0
+    count: int = 0
+
+    def __str__(self):
+        return f"Precision: {self.Precision:.4f}, Recall: {self.Recall:.4f}, F1 Score: {self.F1_Score:.4f}, mAP: {self.mAP:.4f}, UOI: {self.UOI:.4f}"
+
+    def append(self, other):
+        self.Precision = (self.Precision * self.count + other.Precision) / (self.count + 1)
+        self.Recall = (self.Recall * self.count + other.Recall) / (self.count + 1)
+        self.F1_Score = (self.F1_Score * self.count + other.F1_Score) / (self.count + 1)
+        self.mAP = (self.mAP * self.count + other.mAP) / (self.count + 1)
+        self.UOI = (self.UOI * self.count + other.UOI) / (self.count + 1)
+        self.count += 1
+        return self
+
+    def to_wandb(self, tag):
+        return {
+            f"{tag}/Precision": self.Precision,
+            f"{tag}/Recall": self.Recall,
+            f"{tag}/F1 Score": self.F1_Score,
+            f"{tag}/mAP": self.mAP,
+            f"{tag}/UOI": self.UOI,
+        }
+
+
+def evaluate_detection_metrics(ground_truth, predictions, results: DetectionMetrics, iou_threshold=0.5):
     """
     Evaluates object detection metrics including True Positives, False Positives, False Negatives,
     Precision, Recall, F1 Score, and mean Average Precision (mAP).
@@ -50,13 +83,7 @@ def evaluate_detection_metrics(ground_truth, predictions, iou_threshold=0.5):
     precision, recall, f1_score = calculate_precision_recall_f1(tp, fp, fn)
     uoi = sum(iou_values) / len(iou_values) if iou_values else 0
 
-    return {
-        "Precision": precision,
-        "Recall": recall,
-        "F1 Score": f1_score,
-        "mAP": mean_ap,
-        "UOI": uoi,
-    }
+    results.append(DetectionMetrics(precision, recall, f1_score, mean_ap, uoi))
 
 
 def calculate_precision_recall_f1(tp, fp, fn):
