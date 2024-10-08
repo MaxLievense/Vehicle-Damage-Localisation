@@ -1,4 +1,4 @@
-_target_: src.model.model.FasterRCNN
+_target_: src.model.detection.RCNN.FasterRCNN.FasterRCNN
 
 clip_grad: 1.0
 network:

@@ -1,0 +1,4 @@
+defaults:
+  - trainer
+  
+_target_: src.trainer.ClassificationTrainer.ClassificationTrainer

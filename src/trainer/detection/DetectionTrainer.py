@@ -5,13 +5,13 @@ import warnings
 import torch
 import wandb
 
-from src.trainer.ClassificationTrainer import ClassificationTrainer
+from src.trainer.trainer import BaseTrainer
 from src.utils.metrics import evaluate_detection_metrics
 
 warnings.filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_scheduler")
 
 
-class DetectionTrainer(ClassificationTrainer):
+class DetectionTrainer(BaseTrainer):
     def train(self):
         self.model.network.train()
         self.model.pretrain(self)

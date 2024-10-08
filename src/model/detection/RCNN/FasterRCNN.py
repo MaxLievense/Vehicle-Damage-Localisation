@@ -1,10 +1,10 @@
 import torch
 import torchvision
 
-from src.model.model import Model
+from src.model.model import BaseModel
 
 
-class FasterRCNN(Model):
+class FasterRCNN(BaseModel):
     def _init_modules(self):
         super()._init_modules()
         in_features = self.network.roi_heads.box_predictor.cls_score.in_features
