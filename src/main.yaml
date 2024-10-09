@@ -16,7 +16,7 @@ seed: 42
 wandb:
   project: Vehicle-Damage-Localisation
   group:
-  mode: online
+  mode: disabled
   dir: outputs/
   name:
   reinit: true
