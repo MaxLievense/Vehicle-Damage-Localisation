@@ -19,12 +19,13 @@ class DetectionMetrics:
         )
 
     def append(self, other):
-        self.Precision = (self.Precision * self.count + other.Precision * other.count) / (self.count + other.count)
-        self.Recall = (self.Recall * self.count + other.Recall * other.count) / (self.count + other.count)
-        self.F1_Score = (self.F1_Score * self.count + other.F1_Score * other.count) / (self.count + other.count)
-        self.mAP = (self.mAP * self.count + other.mAP * other.count) / (self.count + other.count)
-        self.UOI = (self.UOI * self.count + other.UOI * other.count) / (self.count + other.count)
-        self.count += other.count
+        if other.count > 0:
+            self.Precision = (self.Precision * self.count + other.Precision * other.count) / (self.count + other.count)
+            self.Recall = (self.Recall * self.count + other.Recall * other.count) / (self.count + other.count)
+            self.F1_Score = (self.F1_Score * self.count + other.F1_Score * other.count) / (self.count + other.count)
+            self.mAP = (self.mAP * self.count + other.mAP * other.count) / (self.count + other.count)
+            self.UOI = (self.UOI * self.count + other.UOI * other.count) / (self.count + other.count)
+            self.count += other.count
         return self
 
     def to_wandb(self, tag):
