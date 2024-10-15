@@ -29,6 +29,7 @@ class Callbacks(Base):
         self.callbacks = {name: instantiate(callback) for name, callback in self.cfg.items()}
         self.log.info(f"Loaded callbacks: {', '.join(self.callbacks.keys())}.")
 
+    # pylint: disable=too-many-positional-arguments
     def __call__(
         self,
         trainer: Trainer,
