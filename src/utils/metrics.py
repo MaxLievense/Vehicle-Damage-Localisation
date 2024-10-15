@@ -5,6 +5,8 @@ from torchvision.ops import box_iou
 
 @dataclass
 class DetectionMetrics:
+    """Dataclass to store detection metrics."""
+
     Precision: float = 0
     Recall: float = 0
     F1_Score: float = 0
@@ -13,12 +15,17 @@ class DetectionMetrics:
     count: int = 0
 
     def __str__(self):
+        """Returns a string representation of the DetectionMetrics object."""
         return (
             f"Precision: {self.Precision:.4f}, Recall: {self.Recall:.4f}, F1 Score: {self.F1_Score:.4f}, "
             + f"mAP: {self.mAP:.4f}, UOI: {self.UOI:.4f}"
         )
 
     def append(self, other):
+        """
+        Appends another DetectionMetrics object to the current object.
+        Ensurses the weight of both objects is kept, based on the `self.count`.
+        """
         if other.count > 0:
             self.Precision = (self.Precision * self.count + other.Precision * other.count) / (self.count + other.count)
             self.Recall = (self.Recall * self.count + other.Recall * other.count) / (self.count + other.count)
@@ -29,6 +36,7 @@ class DetectionMetrics:
         return self
 
     def to_wandb(self, tag):
+        """Converts the DetectionMetrics object to a dictionary for logging to Weights & Biases."""
         return {
             f"{tag}/Precision": self.Precision,
             f"{tag}/Recall": self.Recall,
