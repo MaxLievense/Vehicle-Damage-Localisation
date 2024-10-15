@@ -35,7 +35,7 @@ class BaseModel(torch.nn.Module, Base):
         self.n_classes = data.n_classes
 
         self.network = self.init_network()
-        self.log.debug(f"Loaded model:\n{self.network}")
+        # self.log.debug(f"Loaded model:\n{self.network}")
         self.criterion = self.init_criterion()
         self.log.debug(f"Loaded criterion:\n{self.criterion}")
 

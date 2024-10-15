@@ -25,8 +25,6 @@ class Data(Base):
     def __init__(
         self,
         device: torch.device,
-        dataset_transforms: Optional[list] = [],
-        training_transforms: Optional[list] = [],
         **cfg: dict,
     ):
         """
@@ -44,7 +42,7 @@ class Data(Base):
         self.dataset_name = self.cfg.dataset.dataset_name
         self.device = device
 
-        self.plain_transform, self.training_transform = self.get_transform(dataset_transforms, training_transforms)
+        self.plain_transform, self.training_transform = self.get_transform()
         self.log.debug(f"Plain transforms: {self.plain_transform}")
         self.log.debug(f"Training transforms: {self.training_transform}")
 
@@ -56,14 +54,9 @@ class Data(Base):
             + f"{len(self.train_data)} train-, {len(self.val_data)} val-, and {len(self.test_data)} test datapoints."
         )
 
-    def get_transform(
-        self, pre_dataset_transforms: list, pre_training_transforms: list
-    ) -> Tuple[transforms.Compose, transforms.Compose]:
+    def get_transform(self) -> Tuple[transforms.Compose, transforms.Compose]:
         """
         Generates the transforms based on the configuration.
-        Args:
-            pre_dataset_transforms (list): List of dataset transforms.
-            pre_training_transforms (list): List of training transforms.
         Returns:
             Tuple[transforms.Compose, transforms.Compose]: Plain and training transforms.
         """
@@ -75,8 +68,12 @@ class Data(Base):
                 return import_from_cfg(transform_class)(**transform_attr).get()
             return import_from_cfg(transform_class)(**transform_attr)
 
-        dataset_transforms = [build_transforms(transform) for transform in pre_dataset_transforms]
-        training_transforms = [build_transforms(transform) for transform in pre_training_transforms]
+        dataset_transforms = [
+            build_transforms(transform) for transform in self.cfg.dataset.get("dataset_transforms", [])
+        ]
+        training_transforms = [
+            build_transforms(transform) for transform in self.cfg.dataset.get("training_transforms", [])
+        ]
         return transforms.Compose(dataset_transforms), transforms.Compose(training_transforms + dataset_transforms)
 
     def get_dataset(self) -> Tuple[Dataset, Dataset, Dataset, Dataset]:
