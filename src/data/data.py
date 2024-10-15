@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Tuple
 
 import torch
 from hydra.utils import instantiate
 from torchvision import transforms
 
 from src.utils.base import Base
-from utils.imports import import_from_cfg
+from src.utils.imports import import_from_cfg
 
 if TYPE_CHECKING:
     from torch.utils.data import DataLoader, Dataset
@@ -68,13 +68,16 @@ class Data(Base):
                 return import_from_cfg(transform_class)(**transform_attr).get()
             return import_from_cfg(transform_class)(**transform_attr)
 
-        dataset_transforms = [
-            build_transforms(transform) for transform in self.cfg.dataset.get("dataset_transforms", [])
-        ]
-        training_transforms = [
-            build_transforms(transform) for transform in self.cfg.dataset.get("training_transforms", [])
-        ]
-        return transforms.Compose(dataset_transforms), transforms.Compose(training_transforms + dataset_transforms)
+        pre_dataset_transforms = self.cfg.dataset.get("dataset_transforms", [])
+        pre_training_transforms = self.cfg.dataset.get("training_transforms", [])
+        for pre_training_transform in pre_training_transforms:
+            if pre_training_transform in pre_dataset_transforms:
+                pre_training_transforms.remove(pre_training_transform)
+                self.log.warning(f"Training transform {pre_training_transform} is duplicate and is removed.")
+        dataset_transforms = [build_transforms(transform) for transform in pre_dataset_transforms]
+        training_transforms = [build_transforms(transform) for transform in pre_training_transforms]
+
+        return transforms.Compose(dataset_transforms), transforms.Compose(set(training_transforms + dataset_transforms))
 
     def get_dataset(self) -> Tuple[Dataset, Dataset, Dataset, Dataset]:
         """
