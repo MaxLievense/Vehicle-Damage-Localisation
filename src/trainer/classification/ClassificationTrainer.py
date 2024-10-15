@@ -10,7 +10,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_s
 
 
 class ClassificationTrainer(BaseTrainer):
+    """Trainer for the Classification task."""
+
     def train(self):
+        """Classification training loop."""
         self.model.network.train()
         self.model.pretrain(self)
 
@@ -58,18 +61,3 @@ class ClassificationTrainer(BaseTrainer):
             if _breaking:
                 break
         self.model.posttrain(self)
-
-    def eval(self, loader="test"):
-        if loader == "test":
-            self.log.info("Evaluating...")
-
-        _loader = getattr(self.data, loader + "_loader")
-        total_labels = []
-        total_logits = []
-        self.model.network.eval()
-        with torch.no_grad():
-            for _, data in enumerate(_loader):
-                data = [_data.to(self.device) if isinstance(_data, torch.Tensor) else _data for _data in data]
-                _, logits = self.model.step(self, *data)
-                total_logits.append(logits)
-                total_labels.append(data[1])

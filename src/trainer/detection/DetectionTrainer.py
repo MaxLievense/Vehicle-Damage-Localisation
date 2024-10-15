@@ -13,7 +13,10 @@ warnings.filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_s
 
 
 class DetectionTrainer(BaseTrainer):
+    """Trainer for the Detection task."""
+
     def train(self):
+        """Detection training loop."""
         self.model.network.train()
         self.model.pretrain(self)
 
@@ -39,11 +42,11 @@ class DetectionTrainer(BaseTrainer):
                 + f"avg loss: {running_loss / training_entries:.6f} "
                 + f"(lr: {_lr:.5f})"
             )
+
             if self.callback(
                 trainer=self,
                 loss=running_loss,
                 epoch=epoch,
-                accuracy=None,
                 outputs=logits,
                 data=data,
                 lr=_lr,
@@ -59,6 +62,13 @@ class DetectionTrainer(BaseTrainer):
         self.model.posttrain(self)
 
     def eval(self, loader="test"):
+        """
+        Evaluation loop for the Detection task.
+
+        Args:
+            loader (str): Loader to evaluate on. Defaults to "test".
+        """
+
         if loader == "test":
             self.log.info("Evaluating...")
 
@@ -73,5 +83,6 @@ class DetectionTrainer(BaseTrainer):
         wandb.log(running_results.to_wandb(loader), commit=False)
         self.log.info(f"Loader {loader}: " + str(running_results))
 
-        fig = plot_img_with_bbox_and_gt(data[0], data[1], output)
-        wandb.log({f"{loader}/images": [wandb.Image(fig)]}, commit=False)
+        if self.cfg.preview:
+            fig = plot_img_with_bbox_and_gt(data[0], data[1], output)
+            wandb.log({f"{loader}/images": [wandb.Image(fig)]}, commit=False)

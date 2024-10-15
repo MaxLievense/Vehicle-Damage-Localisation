@@ -1,9 +1,10 @@
 defaults:
   - main
+  - optional task: detection
   - data: data
-  - data/dataset: detection/VehicleDamage
-  - model: detection/RCNN/FasterRCNN_MNv3_L
-  - trainer: detection/DetectionTrainer
+  - data/dataset: ${task}/VehicleDamage
+  - model: ${task}/RCNN/FasterRCNN_MNv3_L
+  - trainer: ${task}/DetectionTrainer
   - trainer/optimizer: SGD
   - trainer/scheduler: StepLR
   - trainer/callbacks/eval: eval
