@@ -37,7 +37,7 @@ class COCODataset(Dataset):
         self.coco = COCO(json)
         self.ids = list(self.coco.imgs.keys())
         self.transform = transform
-        self.n_classes = len(self.coco.cats)
+        self.n_classes = len(self.coco.cats) + 1  # Add 1 for background
         self.min_area = min_area
 
         if min_area is not None:

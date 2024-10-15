@@ -1,5 +1,5 @@
 defaults:
-  - dataset
+  - COCO
   - ../transforms@dataset_transforms: totensor
 
 dataset_name: VehicleDamage
