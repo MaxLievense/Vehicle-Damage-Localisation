@@ -1,5 +1,10 @@
+"""
+Dataset object to load a dataset in the COCO format.
+"""
+
 import logging
 import os
+from typing import Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -12,13 +17,21 @@ logging.getLogger("PIL").setLevel(logging.WARNING)
 class COCODataset(Dataset):
     """COCO Custom Dataset compatible with torch.utils.data.DataLoader."""
 
-    def __init__(self, root, json, transform=None, min_area=None):
-        """Set the path for images and captions.
+    def __init__(
+        self,
+        root: str,
+        json: str,
+        transform: Optional[Union[torch.nn.Module, torch.nn.Sequential]] = None,
+        min_area: Optional[float] = None,
+    ):
+        """
+        Initialize COCO dataset.
 
         Args:
-            root: image directory.
-            json: coco annotation file path.
-            transform: image transformer.
+            root (str): Path to root directory to images.
+            json (str): Path to annotation file.
+            transform (torch.nn.Module, optional): Image transform pipeline, e.g., torchvision.transforms.Compose().
+            min_area (float, optional): Filter the annotations by minimum area.
         """
         self.root = root
         self.coco = COCO(json)
@@ -34,60 +47,49 @@ class COCODataset(Dataset):
                 if any(ann["area"] >= min_area for ann in self.coco.loadAnns(self.coco.getAnnIds(imgIds=img_id)))
             ]
 
-        self.category_id_counts = {index: 0 for index in range(0, self.n_classes)}
+        self.class_counts = {index: 0 for index in range(0, self.n_classes)}
         for img_id in self.ids:
             ann_ids = self.coco.getAnnIds(imgIds=img_id)
             anns = self.coco.loadAnns(ann_ids)
             if self.min_area is not None:
                 anns = [ann for ann in anns if ann["area"] >= self.min_area]
             for ann in anns:
-                self.category_id_counts[ann["category_id"]] += 1
-        print(self.category_id_counts)
+                self.class_counts[ann["category_id"]] += 1
 
     def __getitem__(self, index):
         raise NotImplementedError
 
     def __len__(self):
+        """Returns the total number of images."""
         return len(self.ids)
 
 
-# class COCOSinglebbox(COCODataset):
-#     """COCO Custom Dataset compatible with torch.utils.data.DataLoader."""
-
-#     def __init__(self, root, json, transform=None):
-#         """Set the path for images and captions.
-
-#         Args:
-#             root: image directory.
-#             json: coco annotation file path.
-#             transform: image transformer.
-#         """
-#         self.root = root
-#         self.coco = COCO(json)
-#         self.ids = list(self.coco.anns.keys())
-#         self.transform = transform
-#         self.n_classes = len(self.coco.cats)
-
-#     def __getitem__(self, index):
-#         """Returns one data pair (image and bbox)."""
-#         ann_id = self.ids[index]
-#         bbox = self.coco.anns[ann_id]["bbox"]
-#         img_id = self.coco.anns[ann_id]["image_id"]
-#         path = self.coco.loadImgs(img_id)[0]["file_name"]
-
-#         image = Image.open(os.path.join(self.root, path)).convert("RGB")
-#         if self.transform is not None:
-#             image = self.transform(image)
-
-#         target = torch.Tensor(bbox)
-#         return image, target
-
-
 class COCOMultibbox(COCODataset):
-    """COCO Custom Dataset compatible with torch.utils.data.DataLoader."""
+    """Exports COCO's multi-bounding box annotations."""
 
-    def __getitem__(self, index):
-        """Returns all data from image (image and bboxes)."""
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, dict[str, torch.Tensor]]:
+        """
+        Returns image data and corresponding bounding boxes.
+        The bounding boxes are in the format (x_min, y_min, x_max, y_max).
+        The target dictionary may contain multiple detections, where the index of is linked accross the keys.
+
+        Note:
+            Background images are annotated as zeros for each key retaining the same shape.
+
+        Args:
+            index (int): Index of the image.
+
+        Returns:
+            tuple[torch.Tensor, dict[str, torch.Tensor]]:
+                - image (torch.Tensor): The image tensor.
+                - target (dict[str, torch.Tensor]): The target dictionary containing:
+                    - boxes (torch.Tensor): The bounding boxes in the image.
+                    - labels (torch.Tensor): The labels of the bounding boxes.
+                    - image_id (torch.Tensor): The image ID.
+                    - area (torch.Tensor): The area of the bounding boxes.
+                    - iscrowd (torch.Tensor): The iscrowd flag for the bounding boxes.
+
+        """
         coco = self.coco
         img_id = self.ids[index]
         ann_ids = coco.getAnnIds(imgIds=img_id)

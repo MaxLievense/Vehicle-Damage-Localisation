@@ -22,7 +22,7 @@ class Runner(Base):
         super().__init__(cfg=cfg)
         self._hydra_cfg = HydraConfig.get()
         self.log.info(f"Overrides:\n{OmegaConf.to_yaml(self._hydra_cfg.overrides.task)}")
-        self.log.info(f"Config:\n{OmegaConf.to_yaml(self.cfg)}")
+        self.log.info(f"Config:\n{OmegaConf.to_yaml(self.cfg, resolve=True)}")
         self.setup()
 
     def setup(self) -> torch.device:
@@ -39,16 +39,10 @@ class Runner(Base):
         )
         self.set_seeds()
         self.device = torch.device(self.cfg.device)
-        self.log.info(f"Device: {self.device}")
         torch.cuda.empty_cache()
 
     def build(self):
-        self.data = instantiate(
-            self.cfg.data,
-            model_transforms=self.cfg.get("model", {}).get("network", {}).get("transforms", []),
-            device=self.device,
-            _recursive_=False,
-        )
+        self.data = instantiate(self.cfg.data, device=self.device, _recursive_=False)
         self.model = instantiate(self.cfg.model, device=self.device, data=self.data, _recursive_=False)
         self.trainer = instantiate(
             self.cfg.trainer, device=self.device, model=self.model, data=self.data, _recursive_=False

@@ -1,7 +1,7 @@
 dataset_name:
+
 n_classes: 
-tail: False
-open: False
+collate_fn:
 
 dataset_transforms: []
 training_transforms: []

@@ -1,7 +1,7 @@
 defaults:
   - main
   - data: data
-  - data/dataset: VehicleDamage
+  - data/dataset: detection/VehicleDamage
   - model: detection/RCNN/FasterRCNN_MNv3_L
   - trainer: detection/DetectionTrainer
   - trainer/optimizer: SGD

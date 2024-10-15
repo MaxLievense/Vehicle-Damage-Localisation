@@ -1,43 +1,73 @@
+from __future__ import annotations
+
 from copy import deepcopy
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import torch
 from hydra.utils import instantiate
-from omegaconf import DictConfig
-from torch.utils.data.dataloader import default_collate
 from torchvision import transforms
 
 from src.utils.base import Base
-from src.utils.module import import_from_cfg
+from utils.imports import import_from_cfg
+
+if TYPE_CHECKING:
+    from torch.utils.data import DataLoader, Dataset
 
 
 class Data(Base):
+    """
+    Data module to handle dataset loading and data loaders.
+
+    This module should be as generic as possible and should be able to handle any dataset, where the specific dataset
+        handling is done in the dataset submodules.
+    """
+
     def __init__(
         self,
         device: torch.device,
-        dataset_transforms: list,
-        model_transforms: list,
-        training_transforms: list,
+        dataset_transforms: Optional[list] = [],
+        training_transforms: Optional[list] = [],
         **cfg: dict,
-    ) -> None:
+    ):
+        """
+        Initialize the Data class.
+
+        Args:
+            device (torch.device): Device to run the model on.
+            dataset_transforms (list, optional): List of dataset transforms. Defaults to [].
+            model_transforms (list, optional): List of model transforms. Defaults to [].
+            training_transforms (list, optional): List of training transforms. Defaults to [].
+            **cfg (dict): Remaining Hydra configurations.
+        """
         super().__init__(cfg)
-        self.log.debug(f"Building dataset: {self.cfg.dataset.dataset_name}")
 
         self.dataset_name = self.cfg.dataset.dataset_name
         self.device = device
 
-        self.get_transform(model_transforms, dataset_transforms, training_transforms)
-        self.get_dataset(DictConfig(self.cfg.dataset))
-        self.get_loaders(DictConfig(self.cfg.dataloaders))
-        self.n_classes = self.test_data.n_classes if hasattr(self.test_data, "n_classes") else None
+        self.plain_transform, self.training_transform = self.get_transform(dataset_transforms, training_transforms)
+        self.log.debug(f"Plain transforms: {self.plain_transform}")
+        self.log.debug(f"Training transforms: {self.training_transform}")
 
+        self.train_data, self.train_plain_data, self.test_data, self.val_data = self.get_dataset()
+        self.train_loader, self.train_plain_loader, self.val_loader, self.test_loader = self.get_loaders()
+        self.n_classes = self.test_data.n_classes if hasattr(self.test_data, "n_classes") else None
         self.log.info(
             f"Loaded {self.dataset_name} dataset with {self.n_classes} classes, "
             + f"{len(self.train_data)} train-, {len(self.val_data)} val-, and {len(self.test_data)} test datapoints."
         )
 
     def get_transform(
-        self, pre_model_transforms: list = [], pre_dataset_transforms: list = [], pre_training_transforms: list = []
-    ) -> None:
+        self, pre_dataset_transforms: list, pre_training_transforms: list
+    ) -> Tuple[transforms.Compose, transforms.Compose]:
+        """
+        Generates the transforms based on the configuration.
+        Args:
+            pre_dataset_transforms (list): List of dataset transforms.
+            pre_training_transforms (list): List of training transforms.
+        Returns:
+            Tuple[transforms.Compose, transforms.Compose]: Plain and training transforms.
+        """
+
         def build_transforms(transform):
             transform_class, transform_attr = list(transform.items())[0]
             transform_attr = {} if transform_attr is None else transform_attr
@@ -45,87 +75,62 @@ class Data(Base):
                 return import_from_cfg(transform_class)(**transform_attr).get()
             return import_from_cfg(transform_class)(**transform_attr)
 
-        self.log.debug("Building transforms...")
+        dataset_transforms = [build_transforms(transform) for transform in pre_dataset_transforms]
+        training_transforms = [build_transforms(transform) for transform in pre_training_transforms]
+        return transforms.Compose(dataset_transforms), transforms.Compose(training_transforms + dataset_transforms)
 
-        post_model_transforms = [build_transforms(transform) for transform in pre_model_transforms]
-        post_dataset_transforms = [build_transforms(transform) for transform in pre_dataset_transforms]
-        post_training_transforms = [build_transforms(transform) for transform in pre_training_transforms]
+    def get_dataset(self) -> Tuple[Dataset, Dataset, Dataset, Dataset]:
+        """
+        Gets the dataset based on the configuration.
+        Creates a plain train dataset loader which does not apply any training transforms.
+        Imports the collate function if specified in the configuration.
 
-        self.plain_transform = transforms.Compose(post_model_transforms + post_dataset_transforms)
-        self.log.debug(f"Plain transforms: {self.plain_transform}")
+        Returns:
+            Tuple[Dataset, Dataset, Dataset]: Train, test, and validation datasets.
+        """
+        train_data = instantiate(self.cfg.dataset.train, transform=self.training_transform)
+        train_plain_data = deepcopy(train_data)
+        train_plain_data.transform = self.plain_transform
+        self._collate_fn = import_from_cfg(self.cfg.dataset.collate_fn) if self.cfg.dataset.collate_fn else None
 
-        RESIZE_TRANSFORMS = (transforms.Resize, transforms.RandomResizedCrop, transforms.CenterCrop)  # Order matters.
-        if any(isinstance(transform, RESIZE_TRANSFORMS) for transform in post_training_transforms) and any(
-            _model_resize_idx := [isinstance(transform, RESIZE_TRANSFORMS) for transform in post_model_transforms]
-        ):
-            _model_resize_idx.reverse()
-            input_size = post_model_transforms[_model_resize_idx.index(True)].size
-            for transform in post_training_transforms:
-                if isinstance(transform, RESIZE_TRANSFORMS):
-                    transform.size = input_size
-
-        self.training_transform = transforms.Compose(post_training_transforms + post_dataset_transforms)
-        self.log.debug(f"Training transforms: {self.training_transform}")
-
-    def get_dataset(self, dataset_cfg: DictConfig) -> None:
-        self.log.debug("Building dataset...")
-
-        self._init_dataset(dataset_cfg)
-        # self._limit_dataset()
-
-        self.train_plain_data = deepcopy(self.train_data)
-        self.train_plain_data.transform = self.plain_transform
-        assert len(self.train_data) == len(self.train_plain_data)
-
-    def _init_dataset(self, dataset_cfg: DictConfig):
-        self.train_data, self.test_data, self.val_data = (
-            instantiate(dataset_cfg.train, transform=self.training_transform),
-            instantiate(dataset_cfg.test, transform=self.plain_transform),
-            instantiate(dataset_cfg.val, transform=self.plain_transform),
+        return (
+            train_data,
+            train_plain_data,
+            instantiate(self.cfg.dataset.test, transform=self.plain_transform),
+            instantiate(self.cfg.dataset.val, transform=self.plain_transform),
         )
 
-    def _limit_dataset(self):
-        raise NotImplementedError
-        if self.cfg.limit.train and self.train_data and self.cfg.limit.train < len(self.train_data):
-            self.train_data, _ = split_dataset(self.train_data, self.cfg.limit.train, self.cfg.seed)
-            self.log.info(f"\tLimited train data to {len(self.train_data)} samples")
-        if self.cfg.limit.val and self.val_data and self.cfg.limit.val < len(self.val_data):
-            self.val_data, _ = split_dataset(self.val_data, self.cfg.limit.val, self.cfg.seed)
-            self.log.info(f"\tLimited val data to {len(self.val_data)} samples")
-        if self.cfg.limit.test and self.test_data and self.cfg.limit.test < len(self.test_data):
-            self.test_data, _ = split_dataset(self.test_data, self.cfg.limit.test, self.cfg.seed)
-            self.log.info(f"\tLimited test data to {len(self.test_data)} samples")
+    def get_loaders(self) -> Tuple[DataLoader, DataLoader, DataLoader, DataLoader]:
+        """
+        Creates and returns data loaders for training, validation, and testing datasets.
+        Adds collate_fn to the data loaders if specified in the configuration.
 
-    def get_loaders(self, dataloader_cfg: DictConfig) -> None:
+        Returns:
+            Tuple[DataLoader, DataLoader, DataLoader, DataLoader]: A tuple containing the train loader,
+                plain train loader, validation loader, and test loader.
+        """
+
         def _get_loader(loader_cfg, dataset):
+            """
+            Helper function to instantiate a data loader based on the given configuration and dataset.
+
+            Args:
+                loader_cfg (dict): Configuration dictionary for the data loader.
+                dataset (Dataset): The dataset for which the loader will be created.
+
+            Returns:
+                DataLoader: Instantiated data loader.
+            """
             sampler = instantiate(loader_cfg.sampler, dataset=dataset) if loader_cfg.get("sampler") else None
+
             if sampler and loader_cfg.shuffle:
                 self.log.warning("Sampler and shuffle are both set to True. Sampler will be used.")
                 loader_cfg.shuffle = False
             return instantiate(loader_cfg, dataset=dataset, sampler=sampler, collate_fn=self._collate_fn)
 
-        self._collate_fn = getattr(self, self.cfg.collate_fn) if self.cfg.collate_fn else None
-
-        self.train_loader = _get_loader(dataloader_cfg.train_loader, dataset=self.train_data)
-        self.train_plain_loader = _get_loader(dataloader_cfg.train_plain_loader, dataset=self.train_plain_data)
-        self.val_loader = _get_loader(dataloader_cfg.val_loader, dataset=self.val_data)
-        self.test_loader = _get_loader(dataloader_cfg.test_loader, dataset=self.test_data)
-
-    @staticmethod
-    def collate_fn(batch):
-        images = []
-        targets = []
-
-        for item in batch:
-            # Separate the image tensor and the dictionary containing metadata
-            image, target = item
-
-            # Append the image tensor and target dictionary separately
-            images.append(image)
-            targets.append(target)
-
-        # Stack the image tensors into a single batch tensor
-        images = torch.stack(images, dim=0)
-
-        # The targets should remain a list of dictionaries
-        return images, targets
+        return (
+            _get_loader(self.cfg.dataloaders.train_loader, dataset=self.train_data),
+            _get_loader(self.cfg.dataloaders.train_plain_loader, dataset=self.train_plain_data),
+            _get_loader(self.cfg.dataloaders.val_loader, dataset=self.val_data),
+            _get_loader(self.cfg.dataloaders.test_loader, dataset=self.test_data),
+        )
