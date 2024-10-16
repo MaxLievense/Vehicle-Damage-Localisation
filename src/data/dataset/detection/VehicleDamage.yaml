@@ -4,8 +4,8 @@ defaults:
 
 dataset_name: VehicleDamage
 
-min_area: False
-collate_fn: src.utils.data.collate_fn
+min_area: False                         # Filter out bounding boxes with area less than this value
+collate_fn: src.utils.data.collate_fn   # Collate function to use
 
 train:
   _target_: src.data.dataset.COCO.COCOMultibbox

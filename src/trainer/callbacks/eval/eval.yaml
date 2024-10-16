@@ -1,4 +1,4 @@
 _target_: src.trainer.callbacks.eval.eval.Eval
-every_n_epochs: 1
-at_start: True
-loader: val
+every_n_epochs: 1                       # Evaluate every n epochs
+at_start: True                          # Evaluate on first epoch
+loader: val                             # Loader to use for evaluation (val, test)

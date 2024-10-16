@@ -1,6 +1,6 @@
 _target_: src.model.detection.RCNN.FasterRCNN.FasterRCNN
 
-clip_grad: 0.25
+clip_grad: 0.25                         # Clip the gradient norm to this value
 network:
   _target_: torchvision.models.detection.fasterrcnn_resnet50_fpn
   weights: DEFAULT

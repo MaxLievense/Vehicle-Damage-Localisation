@@ -5,9 +5,9 @@ device: ${device}
 
 _target_: 
 
-output_dir: models
-save_last: True # Save the last checkpoint
-eval_at_end: test # False or which loader (e.g. val, test) to evaluate at the end of training
-preview: True # Preview the model output during evaluation
+output_dir: models                      # Directory to save the model
+save_last: True                         # Save the last checkpoint
+eval_at_end: test                       # False or which loader (e.g. val, test) to evaluate at the end of training
+preview: True                           # Preview the model output during evaluation
 
-epochs: 10
+epochs: 10                              # Number of epochs (one pass through the data or sampler)

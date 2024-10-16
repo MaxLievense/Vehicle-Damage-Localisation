@@ -6,12 +6,11 @@ defaults:
 
 _target_: src.data.data.Data
 
-batch_size: 8
-num_workers: 16
+batch_size: 8                           # Number of samples in a batch
+num_workers: 16                         # Number of workers to use for data loading
 
 seed: ${seed}
-dataset_dir: data
-download: True
+dataset_dir: data                       # Directory where the dataset is stored, relative to the project root
 
 dataloaders:
   val_loader:

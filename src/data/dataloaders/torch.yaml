@@ -2,5 +2,5 @@ _target_: torch.utils.data.DataLoader
 
 batch_size: ${data.batch_size}
 shuffle: True
-drop_last: False
+drop_last: False                        # Drop the last incomplete batch
 num_workers: ${data.num_workers}
