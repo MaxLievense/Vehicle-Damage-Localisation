@@ -108,6 +108,7 @@ def calculate_precision_recall_f1(tp, fp, fn):
 
 
 def apply_nms(pred, iou_thresh=0.3):
+    """Applies Non-Maximum Suppression (NMS) to the predicted boxes."""
     keep = nms(pred["boxes"], pred["scores"], iou_thresh)
 
     final_pred = pred
