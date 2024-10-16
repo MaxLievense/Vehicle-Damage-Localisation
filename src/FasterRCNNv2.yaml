@@ -3,8 +3,9 @@ defaults:
   - optional task: detection
   - data: data
   - data/dataset: ${task}/VehicleDamage
+  - data/transforms@data.dataset.training_transforms: flip_color
   - model: ${task}/RCNN/FasterRCNN_R50
-  - model/detection@model.network.rpn_anchor_generator: AnchorGenerator
+  # - model/detection@model.network.rpn_anchor_generator: AnchorGenerator
   - trainer: ${task}/DetectionTrainer
   - trainer/optimizer: SGD
   - trainer/scheduler: StepLR
