@@ -3,6 +3,8 @@ import logging
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
+from src.utils.metrics import apply_nms
+
 logging.getLogger("matplotlib").setLevel(logging.ERROR)
 
 
@@ -22,9 +24,10 @@ def plot_img_with_bbox_and_gt(imgs, gt, pred):
         ax.imshow(img)
         gt_bboxes = _gt["boxes"].cpu().numpy()
         gt_labels = _gt["labels"].cpu().numpy()
-        pred_bboxes = _pred["boxes"].cpu().numpy()[: len(gt_bboxes)]
-        pred_labels = _pred["labels"].cpu().numpy()[: len(gt_bboxes)]
-        pred_scores = _pred["scores"].cpu().numpy()[: len(gt_bboxes)]
+        _pred = apply_nms(_pred)
+        pred_bboxes = _pred["boxes"].cpu().numpy()
+        pred_labels = _pred["labels"].cpu().numpy()
+        pred_scores = _pred["scores"].cpu().numpy()
 
         for bbox, label, score in zip(pred_bboxes, pred_labels, pred_scores):
             rect = patches.Rectangle(

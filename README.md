@@ -2,7 +2,7 @@
 This repository presents a pipeline to address Lensor's Damage Detection challenge. The primary objective is to build an object detection pipeline that identifies various types of vehicle damages using ML. The project emphasises a structured approach to damage detection in a multi-class setting, prioritising the creation of a clean and extensible solution over achieving state-of-the-art (SOTA) performance.
 
 ## Getting started
-ollow the instructions below to run the repository (assuming a Linux environment).
+Follow the instructions below to run the repository (assuming a Linux environment).
 
 ### Python Installation
 Run the following commands or their equivalent:
@@ -27,7 +27,7 @@ data
 ### Running experiment
 The following command will run a complete training and testing cycle:
 ```bash
-python3 src/main.py --config-name=FasterRCNN.yaml
+python3 src/main.py --config-name=FasterRCNNv2.yaml
 ```
 Alternatively, you can customize the configuration. An example command might look like this:
 ```bash
@@ -35,7 +35,7 @@ python3 src/main.py \
     +data=data +data/dataset=VehicleDamage \
     +model=detection/RCNN/FasterRCNN_MNv3_L \
     +trainer=detection/DetectionTrainer +trainer/optimizer=SGD \
-    +trainer/scheduler=StepLR +trainer/callbacks/eval=eval \
+    +trainer/scheduler=StepLR +trainer/callbacks/eval=eval
 ```
 You might need to adjust `device=cuda:0` to `device=cpu` or your equivalent, depending on your enviroment.
 
@@ -81,32 +81,16 @@ The benefits are:
 
 ### Experiment tracking
 I used "Weights and Biases" for experiment tracking as I am familiar with the platform, and it’s free to use. A report showing the training, validation, and testing plots, along with visualizations of the outputs, can be found [here](https://api.wandb.ai/links/maxlievense/jp1xvkma). By default, `wandb` is `disabled`, but it can be enabled by including `wandb.mode=online` in your command line (assuming you have set up your account).
-### Testing
-There was not much testing required for this project, which I can discuss further in the interview. However, tests can be added to the corresponding module, as shown in `src/utils/test/test_metrics.py`, which tests the metric accumulation implementation.
+
+### CI/CD
+A quick GitActions CI/CD implementation has been included to that validates Pull Requests with PyLinting and testing.
 
 ### Deployment
 I skipped the last step in the challenge since deployment is highly dependent on the specific use case and the platforms available. I can provide more details on this during the interview.
 
 ## Dataset
-The provided dataset consists of vehicle images with damage annotations in COCO format, divided into 8 classes. In this implementation, a `min_area` filter is used to exclude annotations below a certain size. The class distribution is shown below:
-
-| `min_area` 	| Subset 	| Total 	| 1   	| 2    	| 3   	| 4   	| 5   	| 6   	| 7   	| 8   	|
-|------------	|--------	|-------	|-----	|------	|-----	|-----	|-----	|-----	|-----	|-----	|
-|            	| Train  	| 1579  	| 240 	| 2525 	| 69  	| 233 	| 288 	| 130 	| 18  	| 9   	|
-| None      	| Val    	| 144   	| 11  	| 104  	| 1   	| 25  	| 12  	| 4   	| 1   	| 1   	|
-|            	| Test   	| 75    	| 19  	| 239  	| 3   	| 17  	| 25  	| 10  	| 3   	| 2   	|
-|------------	|--------	|-------	|-----	|------	|-----	|-----	|-----	|-----	|-----	|-----	|
-|            	| Train  	| 1117  	| 131 	| 805  	| 63  	| 218 	| 264 	| 130 	| 18  	| 9   	|
-| 500        	| Val    	| 86    	| 3   	| 27   	| 1   	| 25  	| 12  	| 4   	| 1   	| 1   	|
-|            	| Test   	| 47    	| 12  	| 65   	| 3   	| 14  	| 21  	| 10  	| 3   	| 2   	|
-|------------	|--------	|-------	|-----	|------	|-----	|-----	|-----	|-----	|-----	|-----	|
-|            	| Train  	| 759   	| 89  	| 333  	| 57  	| 191 	| 201 	| 130 	| 18  	| 9   	|
-| 2000       	| Val    	| 57    	| 1   	| 11   	| 1   	| 24  	| 10  	| 4   	| 1   	| 1   	|
-|            	| Test   	| 36    	| 1   	| 27   	| 3   	| 12  	| 15  	| 10  	| 3   	| 2   	|
-
-From an evaluation perspective, this "long-tailed" distribution, where some classes have more examples than others, can cause biases toward the more common classes. I would aim to create a more evenly distributed test set if possible and might use k-fold cross-validation to ensure generalizability across the entire dataset.
-
-To address the bias, especially for smaller objects, I would consider the following approaches:
-* Adjusting NMS (Non-Maximum Suppression): This step removes duplicate bounding boxes and might be the reason why smaller detections are left out, especially when there are overlapping annotations.
-* Rebalancing anchor ratios and scales: Ensuring that smaller boxes are included as candidate regions will increase computational costs and might require tuning the NMS threshold.
-* Changing the loss function from `CrossEntropy` to Focal Loss: `Focal Loss` adds a modulation term that adjusts the loss for higher class probabilities, helping to reduce bias toward larger objects. This may also require additional tuning.
+The provided dataset consists of vehicle images with damage annotations in COCO format, divided into 8 classes. An analysis has been done on how best to approach the Anchors for object detection, which can be found in this [ipynb](visualisation/data/dataloader.ipynb). Although the an `AnchorGenerator` has been implemented, it would require an custom backbone as the feature size should match the anchor space:
+```bash
+AssertionError: Anchors should be Tuple[Tuple[int]] because each feature map could potentially have different sizes and aspect ratios. There needs to be a match between the number of feature maps passed and the number of sizes / aspect ratios specified.
+```
+This approach was discontinued, due to time limitations.

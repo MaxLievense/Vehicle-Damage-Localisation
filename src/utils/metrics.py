@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from torchvision.ops import box_iou
+from torchvision.ops import box_iou, nms
 
 
 @dataclass
@@ -46,7 +46,7 @@ class DetectionMetrics:
         }
 
 
-def evaluate_detection_metrics(ground_truth, predictions, results: DetectionMetrics, iou_threshold=0.5):
+def evaluate_detection_metrics(ground_truth, predictions, results: DetectionMetrics, iou_threshold=0.3):
     """
     Evaluates object detection metrics including True Positives, False Positives, False Negatives,
     Precision, Recall, F1 Score, and mean Average Precision (mAP).
@@ -105,3 +105,15 @@ def calculate_precision_recall_f1(tp, fp, fn):
     f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
     return precision, recall, f1_score
+
+
+def apply_nms(pred, iou_thresh=0.3):
+    """Applies Non-Maximum Suppression (NMS) to the predicted boxes."""
+    keep = nms(pred["boxes"], pred["scores"], iou_thresh)
+
+    final_pred = pred
+    final_pred["boxes"] = final_pred["boxes"][keep]
+    final_pred["scores"] = final_pred["scores"][keep]
+    final_pred["labels"] = final_pred["labels"][keep]
+
+    return final_pred
