@@ -1,0 +1,22 @@
+defaults:
+  - main
+  - optional task: detection
+  - data: data
+  - data/dataset: ${task}/VehicleDamage
+  - model: ${task}/RCNN/FasterRCNN_R50
+  - model/detection@model.network.rpn_anchor_generator: AnchorGenerator
+  - trainer: ${task}/DetectionTrainer
+  - trainer/optimizer: SGD
+  - trainer/scheduler: StepLR
+  - trainer/callbacks/eval: eval
+
+model:
+  network:
+    weights:
+    rpn_pre_nms_top_n_train: 2500
+    rpn_post_nms_top_n_train: 2500
+    rpn_pre_nms_top_n_test: 1500
+    rpn_post_nms_top_n_test: 1500
+
+trainer:
+  batch_size: 16

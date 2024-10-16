@@ -11,6 +11,8 @@ if TYPE_CHECKING:
     from src.data.data import Data
     from src.trainer.trainer import BaseTrainer as Trainer
 
+torchvision.models.detection.fasterrcnn_resnet50_fpn_v2
+
 
 class FasterRCNN(BaseModel):
     """

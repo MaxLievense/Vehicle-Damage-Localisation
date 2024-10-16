@@ -4,7 +4,7 @@ defaults:
 
 dataset_name: VehicleDamage
 
-min_area: 2000
+min_area: False
 collate_fn: src.utils.data.collate_fn
 
 train:
