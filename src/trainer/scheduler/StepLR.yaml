@@ -1,4 +1,4 @@
 _target_: torch.optim.lr_scheduler.StepLR
 
-step_size: 1
-gamma: 0.9
+step_size: 1                            # Period of learning rate decay
+gamma: 0.9                              # Multiplicative factor of learning rate decay
